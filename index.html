@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Workout Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .progress-overview {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .progress-item {
+            text-align: center;
+        }
+
+        .progress-item h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .workout-container {
+            padding: 30px;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .day-header {
+            padding: 20px 25px;
+            font-weight: bold;
+            font-size: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .day-header.push { background: linear-gradient(45deg, #ff9a56, #ff6b9d); color: white; }
+        .day-header.pull { background: linear-gradient(45deg, #4facfe, #00f2fe); color: white; }
+        .day-header.legs { background: linear-gradient(45deg, #43e97b, #38f9d7); color: white; }
+        .day-header.arms { background: linear-gradient(45deg, #fa709a, #fee140); color: white; }
+        .day-header.rest { background: linear-gradient(45deg, #a8edea, #fed6e3); color: #333; }
+
+        .day-progress {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .exercises {
+            padding: 25px;
+            display: none;
+        }
+
+        .exercises.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .exercise {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .exercise:last-child {
+            border-bottom: none;
+        }
+
+        .exercise:hover {
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .exercise-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #667eea;
+            transform: scale(1.2);
+        }
+
+        .exercise-details {
+            flex-grow: 1;
+        }
+
+        .exercise-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .exercise-sets {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .exercise-notes {
+            color: #888;
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: 3px;
+        }
+
+        .exercise.completed {
+            opacity: 0.7;
+        }
+
+        .exercise.completed .exercise-name {
+            text-decoration: line-through;
+            color: #28a745;
+        }
+
+        .reset-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(238, 90, 36, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(238, 90, 36, 0.4);
+        }
+
+        .expand-all {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .expand-all:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .workout-container {
+                padding: 15px;
+            }
+            
+            .day-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .progress-overview {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 Workout Tracker</h1>
+        </div>
+
+        <div class="workout-container">
+            <button class="expand-all" onclick="toggleAllDays()">📋 Expand All Days</button>
+            
+            <div class="day-card">
+                <div class="day-header push" onclick="toggleDay(this)">
+                    <span>Monday - Push (Chest/Shoulders/Triceps - Arm Emphasis)</span>
+                    <span class="day-progress">0/5 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Bench Press (Barbell or Dumbbell)</div>
+                            <div class="exercise-sets">4 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Overhead Press (Shoulder Press)</div>
+                            <div class="exercise-sets">3 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Incline Dumbbell Press</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Tricep Dips (or Skull Crushers)</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                            <div class="exercise-notes">Bulky arms focus</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Lateral Raises</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header pull" onclick="toggleDay(this)">
+                    <span>Tuesday - Pull (Back/Biceps - Arm Emphasis)</span>
+                    <span class="day-progress">0/5 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Pull-Ups (or Lat Pulldowns)</div>
+                            <div class="exercise-sets">4 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Bent-Over Rows (Barbell)</div>
+                            <div class="exercise-sets">3 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Face Pulls</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Bicep Curls (Dumbbell or EZ Bar)</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                            <div class="exercise-notes">Bulky arms focus</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Hammer Curls</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                            <div class="exercise-notes">Bulky arms focus</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header legs" onclick="toggleDay(this)">
+                    <span>Wednesday - Legs (Quads/Hams/Calves)</span>
+                    <span class="day-progress">0/5 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Squats (Back or Front)</div>
+                            <div class="exercise-sets">4 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Romanian Deadlifts</div>
+                            <div class="exercise-sets">3 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Leg Press or Lunges</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Calf Raises (Standing)</div>
+                            <div class="exercise-sets">3 x 12-15</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Leg Extensions or Curls (Machine)</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header push" onclick="toggleDay(this)">
+                    <span>Thursday - Push (Repeat with Variations)</span>
+                    <span class="day-progress">0/5 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Dumbbell Bench Press</div>
+                            <div class="exercise-sets">4 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Arnold Press (Shoulders)</div>
+                            <div class="exercise-sets">3 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Chest Flyes (Dumbbell or Cable)</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Overhead Tricep Extensions</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                            <div class="exercise-notes">Bulky arms focus</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Front Raises</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header pull" onclick="toggleDay(this)">
+                    <span>Friday - Pull (Repeat with Variations)</span>
+                    <span class="day-progress">0/5 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Seated Rows (Cable or Machine)</div>
+                            <div class="exercise-sets">4 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Deadlifts (Conventional)</div>
+                            <div class="exercise-sets">3 x 8-10</div>
+                            <div class="exercise-notes">Lower reps for strength</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Shrugs (Dumbbell)</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Preacher Curls</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                            <div class="exercise-notes">Bulky arms focus</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Concentration Curls</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                            <div class="exercise-notes">Bulky arms focus</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header arms" onclick="toggleDay(this)">
+                    <span>Saturday (Optional) - Arms/Weak Points</span>
+                    <span class="day-progress">0/5 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Close-Grip Bench Press (Triceps)</div>
+                            <div class="exercise-sets">3 x 8-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Tricep Pushdowns (Cable)</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">EZ Bar Curls</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Wrist Curls (Forearms)</div>
+                            <div class="exercise-sets">3 x 12-15</div>
+                        </div>
+                    </div>
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Reverse Curls</div>
+                            <div class="exercise-sets">3 x 10-12</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header rest" onclick="toggleDay(this)">
+                    <span>Sunday - Rest/Recovery</span>
+                    <span class="day-progress">0/1 completed</span>
+                </div>
+                <div class="exercises">
+                    <div class="exercise">
+                        <input type="checkbox" class="exercise-checkbox" onchange="updateProgress()">
+                        <div class="exercise-details">
+                            <div class="exercise-name">Active recovery: Walk or Yoga</div>
+                            <div class="exercise-sets">-</div>
+                            <div class="exercise-notes">Rest fully if needed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">🔄 Reset Week</button>
+
+    <script>
+        let allExpanded = false;
+
+        // Load saved progress on page load and open today's workout
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            updateProgress();
+            openTodaysWorkout();
+        });
+
+        function openTodaysWorkout() {
+            // Get current day in IST
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+            const istTime = new Date(now.getTime() + istOffset);
+            const dayOfWeek = istTime.getDay(); // 0=Sunday, 1=Monday, etc.
+            
+            // Map day numbers to day cards (0=Sunday is last, 1=Monday is first)
+            const dayMapping = [6, 0, 1, 2, 3, 4, 5]; // [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+            const todayIndex = dayMapping[dayOfWeek];
+            
+            // Open today's workout by default
+            const dayCards = document.querySelectorAll('.day-card');
+            if (dayCards[todayIndex]) {
+                const todayExercises = dayCards[todayIndex].querySelector('.exercises');
+                if (todayExercises) {
+                    todayExercises.classList.add('active');
+                }
+            }
+        }
+
+        function toggleDay(header) {
+            const exercises = header.nextElementSibling;
+            exercises.classList.toggle('active');
+        }
+
+        function toggleAllDays() {
+            const exerciseElements = document.querySelectorAll('.exercises');
+            const button = document.querySelector('.expand-all');
+            
+            allExpanded = !allExpanded;
+            
+            exerciseElements.forEach(exercises => {
+                if (allExpanded) {
+                    exercises.classList.add('active');
+                } else {
+                    exercises.classList.remove('active');
+                }
+            });
+            
+            button.textContent = allExpanded ? '📋 Collapse All Days' : '📋 Expand All Days';
+        }
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.exercise-checkbox');
+            const dayCards = document.querySelectorAll('.day-card');
+            
+            let totalCompleted = 0;
+            let daysCompleted = 0;
+            
+            dayCards.forEach(dayCard => {
+                const dayCheckboxes = dayCard.querySelectorAll('.exercise-checkbox');
+                const dayProgress = dayCard.querySelector('.day-progress');
+                let dayCompleted = 0;
+                
+                dayCheckboxes.forEach(checkbox => {
+                    const exercise = checkbox.closest('.exercise');
+                    if (checkbox.checked) {
+                        dayCompleted++;
+                        totalCompleted++;
+                        exercise.classList.add('completed');
+                    } else {
+                        exercise.classList.remove('completed');
+                    }
+                });
+                
+                dayProgress.textContent = `${dayCompleted}/${dayCheckboxes.length} completed`;
+                
+                if (dayCompleted === dayCheckboxes.length && dayCheckboxes.length > 0) {
+                    daysCompleted++;
+                }
+            });
+            
+            const totalExercises = checkboxes.length;
+            const completionRate = totalExercises > 0 ? Math.round((totalCompleted / totalExercises) * 100) : 0;
+            
+            // Save progress
+            saveProgress();
+        }
+
+        function resetAll() {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                const checkboxes = document.querySelectorAll('.exercise-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                updateProgress();
+            }
+        }
+
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('.exercise-checkbox');
+            const progress = [];
+            checkboxes.forEach((checkbox, index) => {
+                progress[index] = checkbox.checked;
+            });
+            const progressData = {
+                progress: progress,
+                lastUpdated: new Date().toISOString()
+            };
+            try {
+                // Note: This uses memory storage since localStorage isn't available in artifacts
+                window.workoutProgress = progressData;
+            } catch (e) {
+                console.log('Storage not available in this environment');
+            }
+        }
+
+        function loadProgress() {
+            try {
+                const data = window.workoutProgress;
+                if (data && data.progress) {
+                    const checkboxes = document.querySelectorAll('.exercise-checkbox');
+                    checkboxes.forEach((checkbox, index) => {
+                        if (data.progress[index] !== undefined) {
+                            checkbox.checked = data.progress[index];
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Could not load progress');
+            }
+        }
+    </script>
+</body>
+</html>
